@@ -45,20 +45,16 @@
 |------|----------|
 | `resources/js/features/filter/fetch-filter-meta.ts` | Отправка запроса на бэкенд с текущими фильтрами, получение актуальной фасетной сетки |
 | `resources/js/features/filter/rendering-filters.ts` | Заменяет старые фильтры на новые после получения обновлений |
-
 | `resources/js/modules/filter/_filtration.ts` | Основная логика фильтрации: управление фильтрами, их отображение и реакция на изменения |
-| -> `createShowProductsElement` | Создаёт кнопку "Show items" |
-| -> `addSelectedFilters` | Добавляет выбранные фильтры в интерфейс |
-| -> `addFilterElement` | Генерирует HTML-элемент одного фильтра |
-| -> `updateFilters` | Обновляет состояние фильтров при изменениях |
-| -> `areFiltersReset` | Проверяет, сброшены ли все фильтры |
-| -> `handleFilterChange` | Обрабатывает изменение конкретного фильтра |
-
+| → `createShowProductsElement` | Создаёт кнопку "Show items" |
+| → `addSelectedFilters` | Добавляет выбранные фильтры в интерфейс |
+| → `addFilterElement` | Генерирует HTML-элемент одного фильтра |
+| → `updateFilters` | Обновляет состояние фильтров при изменениях |
+| → `areFiltersReset` | Проверяет, сброшены ли все фильтры |
+| → `handleFilterChange` | Обрабатывает изменение конкретного фильтра |
 | `resources/js/modules/filter/_reset-filters.ts` | Сброс одного или всех активных фильтров |
 | `resources/js/modules/filter/_show-more.ts` | Логика "Показать ещё" для фильтров с большим числом значений |
-
 | `resources/js/modules/filter/_sorting.ts` | Управление сортировкой: открытие списка, выбор, добавление в GET-параметры и перезагрузка |
-
 | `resources/js/utils/price-format.ts` | Форматирует число как цену |
 | `resources/js/utils/update-url-params.ts` | Создаёт и обновляет параметры в URL |
 
