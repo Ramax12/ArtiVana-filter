@@ -1,3 +1,5 @@
+import { ISubsubcategory } from '@js/typescript/interfaces';
+
 export const renderingFilters = (
   form: HTMLElement | null,
   filters: Record<string, Record<string, number>>,
@@ -31,8 +33,8 @@ export const renderingFilters = (
         if (inputElement && entries[index] && key !== 'rating') {
           if (key === 'subsubcategories') {
             const listElement: HTMLElement | null = item.closest('.js-filter-list');
-            const subsubcategories = JSON.parse(listElement?.dataset.subsubcategories ?? '');
-            const subsubcategoryValue = subsubcategories.find(e => e.name === entries[index][0]).value;
+            const subsubcategories: Array<ISubsubcategory> = JSON.parse(listElement?.dataset.subsubcategories ?? '[]');
+            const subsubcategoryValue = (subsubcategories.find(e => e.name === entries[index][0]) as Record<string, any>)?.['value'];
 
             inputElement.value = subsubcategoryValue;
           } else {

@@ -1,6 +1,6 @@
 import updateUrlParams from '@js/utils/update-url-params';
 
-(function () {
+export const init = () => {
   const sortElement: HTMLElement | null = document.querySelector('.js-sort');
   const sortFormElement = document.querySelector('.js-sort-form');
   const sortPopupElement = document.querySelector('.js-sort-popup');
@@ -20,12 +20,12 @@ import updateUrlParams from '@js/utils/update-url-params';
     const sortTitleElement = sortElement.querySelector('.js-sort-title');
     const sortItemElements = sortElement.querySelectorAll('.js-sort-item');
 
-    sortTitleElement?.addEventListener('click', function () {
-      this.closest('.js-sort')?.classList.toggle('open');
+    sortTitleElement?.addEventListener('click', () => {
+      sortTitleElement.closest('.js-sort')?.classList.toggle('open');
     });
 
     sortItemElements.forEach(element => {
-      element.addEventListener('click', function () {
+      element.addEventListener('click', function (this: HTMLElement) {
         if (sortTitleElement) {
           const sortNameElement: HTMLElement | null = sortTitleElement.querySelector('.js-sort-name');
           let isDefaultValue: boolean;
@@ -37,8 +37,8 @@ import updateUrlParams from '@js/utils/update-url-params';
               isDefaultValue = false;
             }
 
-            const params = {
-              sort: isDefaultValue ? '' : this.dataset.sort,
+            const params: Record<string, string> = {
+              sort: isDefaultValue ? '' : this.dataset.sort ?? '',
             };
             window.location.href = `${document.location.origin}${document.location.pathname}?${updateUrlParams(params)}`;
 
@@ -80,4 +80,4 @@ import updateUrlParams from '@js/utils/update-url-params';
     sortPopupElement?.classList.add('open');
     document.body.classList.add('overflow-hidden');
   });
-})();
+};

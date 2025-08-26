@@ -2,7 +2,7 @@ import updateUrlParams from '@js/utils/update-url-params';
 import { fetchFilterMeta } from '@js/features/filter/fetch-filter-meta';
 import { renderingFilters } from '@js/features/filter/rendering-filters';
 
-(function () {
+export const init = () => {
   const form: HTMLElement | null = document.querySelector('.js-filter');
   const formPopup = document.querySelector('.js-filter-popup');
   const filterButton = document.querySelector('.js-filter-button');
@@ -76,45 +76,29 @@ import { renderingFilters } from '@js/features/filter/rendering-filters';
     Object.entries(result).forEach(([key, values]) => {
       if (!values.length) return;
 
+      let newValue: string;
       let cleanKey = key.endsWith('[]') ? key.slice(0, -2) : key;
       cleanKey = cleanKey.replace(/^characteristics\[(.+)\]$/, '$1');
       if (cleanKey === 'subsubcategory') {
         cleanKey = 'Departments';
-      }
+        newValue = values
+          .map(value => {
+            const input = document.querySelector<HTMLInputElement>(`.js-filter-item-popup input[value="${value}"]`);
+            const text = input?.parentElement?.querySelector<HTMLElement>('.js-filter-item-text')?.textContent || value;
 
+            return text;
+          })
+          .join(', ');
+      } else {
+        newValue = cleanKey === 'rating' ? `${values[0]}+ stars` : values.map(transformString).join(', ');
+      }
       const newKey = cleanKey === 'rating' ? 'Rating' : transformString(cleanKey);
-      const newValue = cleanKey === 'rating' ? `${values[0]}+ stars` : values.map(transformString).join(', ');
+
       if (key !== 'subcategory' && key !== 'subsubcategory') {
         addFilterElement(newKey, newValue, key, values);
       }
     });
   };
-
-  selectedFilterList?.addEventListener('click', event => {
-    const target = event.target as HTMLElement;
-
-    if (target.classList.contains('js-remove-filter')) {
-      filterItemPopupElements.forEach(element => {
-        const input = element.querySelector('input');
-        if (input) {
-          const values = target.getAttribute('data-value')?.split(',');
-          const key = target.getAttribute('data-filter');
-
-          if (key === 'min_price' || key === 'max_price') {
-            (window as any).updateRangeValue();
-          } else {
-            values?.forEach(value => {
-              if (input.name === key && input.value === value) {
-                input.checked = false;
-              }
-            });
-          }
-        }
-      });
-      const item = target.closest('.js-selected-filter-item');
-      item?.remove();
-    }
-  });
 
   const addFilterElement = (newKey: string, newValue: string, key: string, values: Array<string>) => {
     if (!selectedFilterTemplate || !selectedFilterList) return;
@@ -139,7 +123,7 @@ import { renderingFilters } from '@js/features/filter/rendering-filters';
     selectedFilterList.append(item);
   };
 
-  function updateFilters(isPopup: boolean | undefined) {
+  function updateFilters(isPopup: boolean | undefined, isResetPrice: boolean | undefined) {
     Object.keys(filters).forEach(key => delete filters[key]);
 
     const element = isPopup ? formPopup : form;
@@ -157,12 +141,27 @@ import { renderingFilters } from '@js/features/filter/rendering-filters';
         } else if (input.type === 'text') {
           const replacedValue = value.replace(/\D/g, '');
           if (replacedValue !== '') {
-            filters[key] = replacedValue;
+            if (isResetPrice) {
+              filters[key] = '';
+            } else {
+              filters[key] = replacedValue;
+            }
           }
         }
       }
     });
   }
+
+  const updateFiltersWithCategories = (isPopup: boolean | undefined, isResetPrice?: boolean) => {
+    updateFilters(isPopup, isResetPrice);
+
+    let newFilters = filters;
+
+    newFilters.subcategory = form?.dataset.idSubcategory ?? '';
+    newFilters.subsubcategory = form?.dataset.idSubsubcategory ?? '';
+
+    return fetchFilterMeta(newFilters);
+  };
 
   function areFiltersReset(): boolean {
     const defaultEntries = Object.entries(defaultFilters).filter(([key]) => key !== 'subcategory' && key !== 'subsubcategory');
@@ -179,15 +178,17 @@ import { renderingFilters } from '@js/features/filter/rendering-filters';
     });
   }
 
+  const showButtonPopup = (href: string, count: number) => {
+    if (showProductsButtonMainPopup) {
+      formPopup?.classList.add('show-button');
+      showProductsButtonMainPopup.href = href;
+      showProductsButtonMainPopup.textContent = `Show ${count} items`;
+    }
+  };
+
   const handleFilterChange = async (element: HTMLElement, isPopup?: boolean) => {
-    updateFilters(isPopup);
-
-    let newFilters = filters;
-    newFilters.subcategory = form?.dataset.idSubcategory ?? '';
-    newFilters.subsubcategory = form?.dataset.idSubsubcategory ?? '';
-
-    const filterMeta = await fetchFilterMeta(newFilters);
-    const count = filterMeta.count;
+    const filterMeta = await updateFiltersWithCategories(isPopup);
+    const count: number = filterMeta.count;
 
     const showProductsButton = document.querySelector('.js-show-products');
     const filterItemElement = element.closest('.js-filter-item');
@@ -204,7 +205,6 @@ import { renderingFilters } from '@js/features/filter/rendering-filters';
 
     if (areFiltersReset()) {
       showProductsButtonMain?.classList.add('hidden');
-      selectedFilterElement?.classList.add('hidden');
       formPopup?.classList.remove('show-button');
       document.querySelector('.js-show-products')?.remove();
     } else {
@@ -213,13 +213,53 @@ import { renderingFilters } from '@js/features/filter/rendering-filters';
         showProductsButtonMain.href = href;
         showProductsButtonMain.textContent = `Show ${count} items`;
       }
-      if (showProductsButtonMainPopup) {
-        formPopup?.classList.add('show-button');
-        showProductsButtonMainPopup.href = href;
-        showProductsButtonMainPopup.textContent = `Show ${count} items`;
-      }
+      showButtonPopup(href, count);
     }
   };
+
+  selectedFilterList?.addEventListener('click', async event => {
+    const target = event.target as HTMLElement;
+
+    if (target.classList.contains('js-remove-filter')) {
+      const values = target.getAttribute('data-value')?.split(',');
+      const key = target.getAttribute('data-filter');
+      let isResetPrice = false;
+
+      filterItemPopupElements.forEach(element => {
+        const input = element.querySelector('input');
+        if (input) {
+          if (key === 'min_price' || key === 'max_price') {
+            (window as any).updateRangeValue();
+            isResetPrice = true;
+          } else {
+            values?.forEach(value => {
+              if (input.name === key && input.value === value) {
+                input.checked = false;
+              }
+            });
+          }
+        }
+      });
+      const filterMeta = await updateFiltersWithCategories(true, isResetPrice);
+      renderingFilters(form, filterMeta.filters, filters);
+
+      const item = target.closest('.js-selected-filter-item');
+
+      if (key) {
+        const count: number = filterMeta.count;
+        const parsedUrl = new URL(showProductsButtonMainPopup?.href ?? '');
+
+        parsedUrl.searchParams.delete(key);
+
+        showButtonPopup(parsedUrl.toString(), count);
+      }
+      item?.remove();
+
+      if (selectedFilterList.children.length === 0) {
+        selectedFilterElement?.classList.add('hidden');
+      }
+    }
+  });
 
   if (form) {
     document.querySelectorAll<HTMLInputElement>('.js-filter input, .js-filter-popup input').forEach(element => {
@@ -265,4 +305,4 @@ import { renderingFilters } from '@js/features/filter/rendering-filters';
     formPopup?.classList.add('open');
     document.body.classList.add('overflow-hidden');
   });
-})();
+};

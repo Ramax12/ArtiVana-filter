@@ -281,6 +281,7 @@ const onClickInput = (event: Event) => {
   >
     <label
       v-if="label"
+      data-testid="label"
       class="mb-0.5 leading-6"
     >{{ label }}</label>
 
@@ -305,6 +306,7 @@ const onClickInput = (event: Event) => {
         :name="name"
         :placeholder="placeholder"
         v-bind="autocomplete ? { autocomplete } : {}"
+        data-testid="input"
         class="w-full px-3 py-2 text-gray-900 border border-gray-500 rounded-md bg-gray-200 transition-all duration-200 ease-in-out
         hover:border-gray-700 focus:border-brand focus:shadow-brand-light placeholder-gray-600"
         :class="[
@@ -328,6 +330,7 @@ const onClickInput = (event: Event) => {
 
     <div
       v-if="showMessage"
+      data-testid="error-message"
       class="absolute bottom-[-19px] left-0 text-[13px] text-red-700"
     >
       {{ showMessage?.description }}
